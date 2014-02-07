@@ -12,7 +12,7 @@ namespace AvsCommon
         public abstract byte[] GetPlaneData(Plane? plane = null);
         public abstract Colorspace GetColorspace();
 
-        public bool ColorspaceMatch(VideoFrame other)
+        public bool ColorspaceMatches(VideoFrame other)
         {
             return GetColorspace() == other.GetColorspace();
         }

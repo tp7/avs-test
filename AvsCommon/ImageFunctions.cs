@@ -36,7 +36,7 @@ namespace AvsCommon
     {
         public static ImageComparisonResult CompareImages(VideoFrame a, VideoFrame b)
         {
-            if (a.GetColorspace() != b.GetColorspace())
+            if (!a.ColorspaceMatches(b))
             {
                 throw new BugException("Colorspace doesn't match in CompareImages. This is a bug");
             }

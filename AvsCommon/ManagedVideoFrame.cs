@@ -43,6 +43,20 @@ namespace AvsCommon
             _colorspace = colorspace;
         }
 
+        public ManagedVideoFrame(int lumaWidth, int lumaHeight, int chromaWidth, int chromaHeight, Colorspace colorspace)
+        {
+            _bufferY = new byte[lumaWidth*lumaHeight];
+            _bufferU = new byte[chromaWidth*chromaHeight];
+            _bufferV = new byte[chromaWidth*chromaHeight];
+            _colorspace = colorspace;
+            _pitch = lumaWidth;
+            _pitchChroma = chromaWidth;
+            _height = lumaHeight;
+            _heightChroma = chromaHeight;
+            _width = lumaWidth;
+            _widthChroma = chromaWidth;
+        }
+
         public override int GetHeight(Plane? plane = null)
         {
             return plane == null || plane == Plane.Y ? _height : _heightChroma;

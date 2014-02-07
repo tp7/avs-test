@@ -5,17 +5,53 @@ using System.Linq;
 using AvsCommon;
 using AvsCommon.Ipc;
 using AvsTest.Exceptions;
+using CommandLine;
+using CommandLine.Text;
 
 namespace AvsTest
 {
+    internal class Options
+    {
+        [Option('r', "ref-dll", DefaultValue = "AviSynth.dll", HelpText="Path to reference AviSynth.dll")]
+        public string StableAvs { get; set; }
+
+        [Option('t', "test-dll", Required = true, HelpText="Path to AviSynth.dll under test")]
+        public string TestAvs { get; set; }
+
+        [Option('s', "scripts", Required = true, HelpText="Path to folder with test scripts")]
+        public string TestScripsFolder { get; set; }
+
+        [HelpOption]
+        public string GetUsage()
+        {
+            var help = new HelpText
+            {
+                Heading = new HeadingInfo("Avisynth black-box testing app", "v0.000000001"),
+                Copyright = new CopyrightInfo("Victor Efimov", 2014),
+                AdditionalNewLineAfterOption = true,
+                AddDashesToOption = true
+            };
+            help.AddPreOptionsLine(
+                @"Usage: AvsTest --stable-dll C:\stable\avisynth.dll --ref-dll C:\unstable\avisynth.dll --scripts C:\scripts");
+            help.AddOptions(this);
+            return help;
+        }
+    }
+
     static class Program
     {
         static void Main(string[] args)
         {
-            const string folder = @"D:\dev\cpp\avs\AvsTest\tests";
-            const string stableAvsPath = @"D:\dev\avisynth\icl\avisynth.dll";
-            const string testAvsPath = "avisynth.dll";
-            RunTest(folder, stableAvsPath, testAvsPath);
+            var logger = new Logger();
+            var options = new Options();
+            if (Parser.Default.ParseArguments(args, options))
+            {
+                RunTest(options.TestScripsFolder, options.StableAvs, options.TestAvs);
+            }
+            else
+            {
+                logger.LogError("Invalid commandline");
+            }
         }
 
         private static void RunTest(string folder, string stableAvsPath, string testAvsPath)
@@ -72,7 +108,7 @@ namespace AvsTest
                 logger.LogTestFailure("Failed. Frame dimensions don't match");
                 return;
             }
-            if (!testFrame.ColorspaceMatch(refFrame))
+            if (!testFrame.ColorspaceMatches(refFrame))
             {
                 logger.LogTestFailure("Failed: colorspace doesn't match");
                 return;

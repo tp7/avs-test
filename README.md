@@ -1,6 +1,6 @@
 ## Avisynth black-box testing app ##
 
-This is a very simple project for black-box testing of avisynth core filters. It doesn't do much useful yet (it hardly even works and paths are hardcoded) but one day it might. 
+This is a very simple project for black-box testing of avisynth core filters. It doesn't do much useful yet (it hardly even works) but one day it might. 
 Primary purpose of this app is to do regression testing during internal filters refactoring/optimization.
 
 ### Current goals ###
