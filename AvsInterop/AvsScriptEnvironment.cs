@@ -31,7 +31,14 @@ namespace AvsInterop
 
         private void Cleanup()
         {
-            _avsApi.AvsDeleteScriptEnvironment(_env);
+            if (_avsApi == null)
+            {
+                return;
+            }
+            if (_env != IntPtr.Zero)
+            {
+                _avsApi.AvsDeleteScriptEnvironment(_env);
+            }
             _avsApi.Dispose();
         }
 
