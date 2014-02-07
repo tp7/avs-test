@@ -1,5 +1,5 @@
-﻿
-using System;
+﻿using System;
+using AvsCommon.Enums;
 
 namespace AvsCommon
 {

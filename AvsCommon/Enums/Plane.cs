@@ -1,4 +1,4 @@
-﻿namespace AvsCommon
+﻿namespace AvsCommon.Enums
 {
     public enum Plane
     {

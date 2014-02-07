@@ -1,4 +1,4 @@
-﻿namespace AvsCommon
+﻿namespace AvsCommon.Enums
 {
     //from avisynth.h 2.6
     // Specific colorformats
