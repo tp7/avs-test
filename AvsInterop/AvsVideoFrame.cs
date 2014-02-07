@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using AvsCommon;
+using AvsCommon.Enums;
 
 namespace AvsInterop
 {

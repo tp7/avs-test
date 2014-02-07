@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
 using AvsCommon;
+using AvsCommon.Enums;
 using AvsCommon.Exceptions;
 using AvsCommon.Ipc;
 

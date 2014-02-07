@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
+using AvsCommon.Enums;
 using AvsCommon.Exceptions;
 
 namespace AvsCommon
