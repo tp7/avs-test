@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using AvsCommon.Exceptions;
 
 namespace AvsInterop
 {
@@ -52,7 +53,8 @@ namespace AvsInterop
         {
             if (_value.type != AvsValueType.String)
             {
-                throw new InvalidOperationException();
+                throw new AvsValueTypeException(string.Format("Invalid value type. String expected, actual: {0}",
+                    _value.type));
             }
             return Marshal.PtrToStringAnsi(_value.stringValue);
         }
@@ -61,13 +63,21 @@ namespace AvsInterop
         {
             if (_value.type != AvsValueType.Clip)
             {
-                throw new InvalidOperationException();
+                throw new AvsValueTypeException(string.Format("Invalid value type. Clip expected, actual: {0}",
+                    _value.type));
             }
             if (_env == null)
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("Tring to capture clip while environment is null");
             }
             return _env.AvsTakeClip(_value);
+        }
+
+        public bool IsError { get { return _value.type == AvsValueType.Error; } }
+
+        public string ErrorMessage
+        {
+            get { return _value.type == AvsValueType.Error ? Marshal.PtrToStringAnsi(_value.stringValue) : null; }
         }
 
         internal AvsValue(AvsValueStructure value, AvsScriptEnvironment env)

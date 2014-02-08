@@ -65,6 +65,11 @@ namespace AvsInterop
             {
                 using (var result = env.Invoke("eval", new AvsValue(test.ScriptText), true))
                 {
+                    if (result.IsError)
+                    {
+                        throw new AvsOperationException(string.Format("AviSynth returned error: {0}",
+                            result.ErrorMessage));
+                    }
                     using (var clip = result.AsClip())
                     {
                         if (test.AccessType == AccessType.Sequential)

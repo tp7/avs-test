@@ -49,6 +49,7 @@
     <Compile Include="Enums\Colorspace.cs" />
     <Compile Include="Exceptions\AvsLoadingException.cs" />
     <Compile Include="Exceptions\AvsOperationException.cs" />
+    <Compile Include="Exceptions\AvsValueTypeException.cs" />
     <Compile Include="Exceptions\BugException.cs" />
     <Compile Include="ImageFunctions.cs" />
     <Compile Include="Ipc\StartupData.cs" />
