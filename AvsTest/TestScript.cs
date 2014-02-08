@@ -9,11 +9,18 @@ using AvsTest.Exceptions;
 
 namespace AvsTest
 {
+    public class TestCaseData
+    {
+        public string Name { get; set; }
+        public string ImageName { get; set; }
+        public List<TestParameter> Variables { get; set; }
+    }
+
    public class TestScript
     {
         private readonly string _text;
         public string Name { get; private set; }
-        private readonly List<List<TestParameter>> _parameters;
+        private readonly List<TestCaseData> _parameters;
         private int _frame;
         private AccessType _accessType;
 
@@ -22,7 +29,7 @@ namespace AvsTest
         {
             _text = File.ReadAllText(path);
             Name = Path.GetFileNameWithoutExtension(path);
-            _parameters = new List<List<TestParameter>>();
+            _parameters = new List<TestCaseData>();
             ParseText();
         }
 
@@ -45,26 +52,23 @@ namespace AvsTest
                     continue;
                 }
                  var paramValue = split[1].Trim();
-                switch (split[0].TrimStart('#').Trim().ToLowerInvariant()) //parameter name
+                switch (split[0].TrimStart(new [] {'#', '~'}).Trim().ToLowerInvariant()) //parameter name
                 {
                     case "test case":
-                        var pairs = split[1].Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-                        var testCase = new List<TestParameter>();
-                        foreach (var pair in pairs)
+                        if (paramValue.StartsWith("{{"))
                         {
-                            var splittedPair = pair.Split(new[] {'='}, StringSplitOptions.RemoveEmptyEntries);
-                            if (splittedPair.Length != 2)
+                            if (!paramValue.EndsWith("}}"))
                             {
-                                throw new ParsingException(string.Format("Invalid parameter pair on line {0}: {1}",
-                                    lineNumber, pair));
+                                throw new ParsingException(
+                                    string.Format("Invalid test case at line {0}: no closing }} found. " +
+                                                  "Multiline test cases are not yet supported", lineNumber));
                             }
-                            testCase.Add(new TestParameter
-                            {
-                                Name = splittedPair[0].Trim(),
-                                Value = splittedPair[1].Trim()
-                            });
+                            _parameters.Add(ParseTestCase(paramValue.TrimStart('{').TrimEnd('}'), true));
                         }
-                        _parameters.Add(testCase);
+                        else
+                        {
+                            _parameters.Add(ParseTestCase(paramValue, false));
+                        }
                         break;
                     case "frame":
                         if (!int.TryParse(paramValue, out _frame))
@@ -87,6 +91,66 @@ namespace AvsTest
             }
         }
 
+       private static TestCaseData ParseTestCase(string value, bool complex)
+       {
+           var td = new TestCaseData();
+           if (complex)
+           {
+               var split = value.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+               foreach (var pair in split)
+               {
+                   var paramArray = pair.Split(new[] {':'}, 2, StringSplitOptions.RemoveEmptyEntries);
+                   if (paramArray.Length != 2)
+                   {
+                       throw new ParsingException(string.Format("Invalid param value: {0}", pair));
+                   }
+                   var paramName = paramArray[0].Trim().ToLowerInvariant();
+                   var paramValue = paramArray[1].Trim();
+                   switch (paramName)
+                   {
+                       case "name":
+                           td.Name = paramValue;
+                           break;
+                       case "img-name":
+                       case "image-name":
+                           td.ImageName = paramValue;
+                           break;
+                       case "vars":
+                       case "variables":
+                           td.Variables = ParseVariablesString(paramValue);
+                           break;
+                       default:
+                           throw new ParsingException(string.Format("Unknown parameter: {0}", paramName));
+                   }
+               }
+           }
+           else
+           {
+               td.Variables = ParseVariablesString(value);
+           }
+           return td;
+       }
+
+       private static List<TestParameter> ParseVariablesString(string value)
+       {
+           var pairs = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+           var parameters = new List<TestParameter>();
+           foreach (var pair in pairs)
+           {
+               var splittedPair = pair.Split(new[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+               if (splittedPair.Length != 2)
+               {
+                   throw new ParsingException(string.Format("Invalid parameter pair: {0}", pair));
+               }
+               parameters.Add(new TestParameter
+               {
+                   Name = splittedPair[0].Trim(),
+                   Value = splittedPair[1].Trim()
+               });
+           }
+           return parameters;
+       }
+
         public IEnumerable<TestCase> GetTestCases()
         {
             if (_parameters.Count == 0)
@@ -107,9 +171,10 @@ namespace AvsTest
             {
                 AccessType = _accessType,
                 Frame = _frame,
-                ScriptText = PrepareScriptText(_text, testCase),
-                TestName = Name,
-                Parameters = testCase.AsReadOnly()
+                ScriptText = PrepareScriptText(_text, testCase.Variables),
+                TestName = testCase.Name ?? Name,
+                ImageName = testCase.ImageName,
+                Parameters = testCase.Variables.AsReadOnly()
             });
         }
 

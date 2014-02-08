@@ -7,6 +7,7 @@ namespace AvsCommon
     [Serializable]
     public class TestCase
     {
+        public string ImageName { get; set; }
         public string TestName { get; set; }
         public string ScriptText { get; set; }
         public int Frame { get; set; }
