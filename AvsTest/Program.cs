@@ -6,38 +6,9 @@ using AvsCommon;
 using AvsCommon.Ipc;
 using AvsTest.Exceptions;
 using CommandLine;
-using CommandLine.Text;
 
 namespace AvsTest
 {
-    internal class Options
-    {
-        [Option('r', "ref-dll", DefaultValue = "AviSynth.dll", HelpText="Path to reference AviSynth.dll")]
-        public string StableAvs { get; set; }
-
-        [Option('t', "test-dll", Required = true, HelpText="Path to AviSynth.dll under test")]
-        public string TestAvs { get; set; }
-
-        [Option('s', "scripts", Required = true, HelpText="Path to folder with test scripts")]
-        public string TestScripsFolder { get; set; }
-
-        [HelpOption]
-        public string GetUsage()
-        {
-            var help = new HelpText
-            {
-                Heading = new HeadingInfo("Avisynth black-box testing app", "v0.000000001"),
-                Copyright = new CopyrightInfo("Victor Efimov", 2014),
-                AdditionalNewLineAfterOption = true,
-                AddDashesToOption = true
-            };
-            help.AddPreOptionsLine(
-                @"Usage: AvsTest --stable-dll C:\stable\avisynth.dll --ref-dll C:\unstable\avisynth.dll --scripts C:\scripts");
-            help.AddOptions(this);
-            return help;
-        }
-    }
-
     static class Program
     {
         static void Main(string[] args)
@@ -46,7 +17,7 @@ namespace AvsTest
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options))
             {
-                RunTest(options.TestScripsFolder, options.StableAvs, options.TestAvs);
+                RunTest(options);
             }
             else
             {
@@ -54,10 +25,23 @@ namespace AvsTest
             }
         }
 
-        private static void RunTest(string folder, string stableAvsPath, string testAvsPath)
+        private static void RunTest(Options options)
         {
             var logger = new Logger();
-            var scripts = LoadScipts(folder, logger);
+            var scripts = LoadScipts(options.TestScripsFolder, logger);
+
+            if (options.Exclude != null && options.Exclude.Any())
+            {
+                scripts = scripts.Where(f => options.Exclude.All(e =>
+                    !string.Equals(e, f.Name, StringComparison.OrdinalIgnoreCase)
+                    ));
+            }
+            if (options.Include != null && options.Include.Any())
+            {
+                scripts = scripts.Where(f => options.Include.Any(e =>
+                    string.Equals(e, f.Name, StringComparison.OrdinalIgnoreCase)
+                    ));
+            }
 
             foreach (var script in scripts)
             {
@@ -75,8 +59,8 @@ namespace AvsTest
                     }
                     
 
-                    var testResult = new TestRunner(testAvsPath).RunTestCase(testCase);
-                    var idealResult = new TestRunner(stableAvsPath).RunTestCase(testCase);
+                    var testResult = new TestRunner(options.TestAvs).RunTestCase(testCase);
+                    var idealResult = new TestRunner(options.StableAvs).RunTestCase(testCase);
 
                     LogTestResult(testResult, idealResult, logger);
 

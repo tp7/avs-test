@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\ParsingException.cs" />
+    <Compile Include="Options.cs" />
     <Compile Include="TestRunner.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
