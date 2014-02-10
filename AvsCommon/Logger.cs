@@ -5,34 +5,34 @@ using AvsCommon.Enums;
 namespace AvsCommon
 {
     //one day I'll put something in here
-    public class Logger
+    public static class Logger
     {
-        public void LogWarning(string message)
+        public static void LogWarning(string message)
         {
             Console.WriteLine(message);
         }
 
-        public void LogError(string message)
+        public static void LogError(string message)
         {
             Console.WriteLine(message);
         }
 
-        public void LogSuccess(string message)
+        public static void LogSuccess(string message)
         {
             Console.WriteLine("\t" + message);
         }
 
-        public void LogTestStart(string message)
+        public static void LogTestStart(string message)
         {
             Console.WriteLine(message);
         }
 
-        public void LogTestFailure(string message)
+        public static void LogTestFailure(string message)
         {
             Console.WriteLine("\t" + message);
         }
 
-        public void LogComparisonResult(ImageComparisonResult result)
+        public static void LogComparisonResult(ImageComparisonResult result)
         {
             if (result.AllZero)
             {
@@ -53,12 +53,12 @@ namespace AvsCommon
             }
         }
 
-        public void WriteEmptyLine()
+        public static void WriteEmptyLine()
         {
             Console.WriteLine();
         }
 
-        public void LogEpilogue(int total, int failed, int success)
+        public static void LogEpilogue(int total, int failed, int success)
         {
             Console.WriteLine("Total: {0} tests", total);
             Console.WriteLine("Success: {0}", success);

@@ -13,7 +13,6 @@ namespace AvsTest
     {
         static void Main(string[] args)
         {
-            var logger = new Logger();
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options))
             {
@@ -21,14 +20,13 @@ namespace AvsTest
             }
             else
             {
-                logger.LogError("Invalid commandline");
+                Logger.LogError("Invalid commandline");
             }
         }
 
         private static void RunTest(Options options)
         {
-            var logger = new Logger();
-            var scripts = LoadScipts(options.TestScripsFolder, logger);
+            var scripts = LoadScipts(options.TestScripsFolder);
 
             if (options.Exclude != null && options.Exclude.Any())
             {
@@ -53,11 +51,11 @@ namespace AvsTest
                 {
                     if (testCase.Parameters.Count == 0)
                     {
-                        logger.LogTestStart(testCase.TestName);
+                        Logger.LogTestStart(testCase.TestName);
                     }
                     else
                     {
-                        logger.LogTestStart(string.Format("{0}: {1}", testCase.TestName,
+                        Logger.LogTestStart(string.Format("{0}: {1}", testCase.TestName,
                             string.Join(", ",
                                 testCase.Parameters.Select(f => string.Format("{0}={1}", f.Name, f.Value)))));
                     }
@@ -66,7 +64,7 @@ namespace AvsTest
                     var testResult = new TestRunner(options.TestAvs).RunTestCase(testCase);
                     var idealResult = new TestRunner(options.StableAvs).RunTestCase(testCase);
 
-                    var result = LogTestResult(testResult, idealResult, logger);
+                    var result = LogTestResult(testResult, idealResult);
                     if (result)
                     {
                         success++;
@@ -77,23 +75,23 @@ namespace AvsTest
                     }
                     total++;
 
-                    logger.WriteEmptyLine();
+                    Logger.WriteEmptyLine();
                 }
             }
-            logger.LogEpilogue(total, failed, success);
+            Logger.LogEpilogue(total, failed, success);
         }
 
-        private static bool LogTestResult(TestResult testResult, TestResult idealResult, Logger logger)
+        private static bool LogTestResult(TestResult testResult, TestResult idealResult)
         {
             if (testResult.Kind == TestResultKind.Exception)
             {
-                logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
+                Logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
                     testResult.Exception.GetType().FullName, testResult.Exception.Message));
                 return false;
             }
             if (idealResult.Kind == TestResultKind.Exception)
             {
-                logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
+                Logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
                     idealResult.Exception.GetType().FullName, idealResult.Exception.Message));
                 return false;
             }
@@ -103,30 +101,30 @@ namespace AvsTest
 
             if (!testFrame.DimensionsMatch(refFrame))
             {
-                logger.LogTestFailure("Failed. Frame dimensions don't match");
+                Logger.LogTestFailure("Failed. Frame dimensions don't match");
                 return false;
             }
             if (!testFrame.ColorspaceMatches(refFrame))
             {
-                logger.LogTestFailure("Failed: colorspace doesn't match");
+                Logger.LogTestFailure("Failed: colorspace doesn't match");
                 return false;
             }
             var diff = ImageFunctions.CompareImages(refFrame, testFrame);
             if (diff.AllZero)
             {
-                logger.LogSuccess("Success");
+                Logger.LogSuccess("Success");
                 return true;
             }
-            logger.LogTestFailure("Failed: frames aren't identical");
-            logger.LogComparisonResult(diff);
+            Logger.LogTestFailure("Failed: frames aren't identical");
+            Logger.LogComparisonResult(diff);
             return false;
         }
 
-        private static IEnumerable<TestScript> LoadScipts(string scriptsFolder, Logger logger)
+        private static IEnumerable<TestScript> LoadScipts(string scriptsFolder)
         {
             if (!Directory.Exists(scriptsFolder))
             {
-                logger.LogError(string.Format("Scripts directory doesn't exist: {0}", scriptsFolder));
+                Logger.LogError(string.Format("Scripts directory doesn't exist: {0}", scriptsFolder));
                 return new List<TestScript>();
             }
             var paths = Directory.EnumerateFiles(scriptsFolder, "*.avs", SearchOption.AllDirectories);
@@ -141,7 +139,7 @@ namespace AvsTest
                 }
                 catch (ParsingException e)
                 {
-                    logger.LogWarning(string.Format("Error parsing script {0}:{1}\t {2}", path, Environment.NewLine,
+                    Logger.LogWarning(string.Format("Error parsing script {0}:{1}\t {2}", path, Environment.NewLine,
                         e.Message));
                 }
             }
