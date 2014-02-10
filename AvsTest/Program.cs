@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AvsCommon;
+using AvsCommon.Exceptions;
 using AvsCommon.Ipc;
 using AvsTest.Exceptions;
 using CommandLine;
@@ -16,7 +17,7 @@ namespace AvsTest
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options))
             {
-                RunTest(options);
+                RunTests(options);
             }
             else
             {
@@ -24,7 +25,7 @@ namespace AvsTest
             }
         }
 
-        private static void RunTest(Options options)
+        private static void RunTests(Options options)
         {
             var scripts = LoadScipts(options.TestScripsFolder);
 
@@ -43,7 +44,7 @@ namespace AvsTest
 
             int total = 0;
             int failed = 0;
-            int success = 0;
+            int passed = 0;
 
             foreach (var script in scripts)
             {
@@ -59,15 +60,12 @@ namespace AvsTest
                             string.Join(", ",
                                 testCase.Parameters.Select(f => string.Format("{0}={1}", f.Name, f.Value)))));
                     }
-                    
 
-                    var testResult = new TestRunner(options.TestAvs).RunTestCase(testCase);
-                    var idealResult = new TestRunner(options.StableAvs).RunTestCase(testCase);
-
-                    var result = LogTestResult(testResult, idealResult);
-                    if (result)
+                    bool success = RunComparisonTest(options, testCase);
+                  
+                    if (success)
                     {
-                        success++;
+                        passed++;
                     }
                     else
                     {
@@ -76,10 +74,18 @@ namespace AvsTest
                     total++;
                 }
             }
-            Logger.LogEpilogue(total, failed, success);
+            Logger.LogEpilogue(total, failed, passed);
         }
 
-        private static bool LogTestResult(TestResult testResult, TestResult idealResult)
+        private static bool RunComparisonTest(Options options, TestCase testCase)
+        {
+            var testResult = new TestRunner(options.TestAvs).RunTestCase(testCase);
+            var idealResult = new TestRunner(options.StableAvs).RunTestCase(testCase);
+
+            return LogTestResult(testResult, idealResult, options);
+        }
+
+        private static bool LogTestResult(TestResult testResult, TestResult idealResult, Options options)
         {
             if (testResult.Kind == TestResultKind.Exception)
             {
@@ -94,8 +100,28 @@ namespace AvsTest
                 return false;
             }
 
-            var testFrame = testResult.Frame;
-            var refFrame = idealResult.Frame;
+            if (testResult.Kind != idealResult.Kind)
+            {
+                throw new BugException("Results of different kind in a single comparison test");
+            }
+            if (testResult.Kind == TestResultKind.Fps)
+            {
+                return LogFpsComparison(testResult, idealResult, options.MaxFpsDrop);
+            }
+            return LogFrameComparison(testResult, idealResult);
+        }
+
+        private static bool LogFpsComparison(TestResult test, TestResult reference, float maxFpsDrop)
+        {
+            bool success = (reference.Performance.Fps - test.Performance.Fps)/reference.Performance.Fps*100 < maxFpsDrop;
+            Logger.LogFpsTestResult(success, test, reference);
+            return success;
+        }
+
+        private static bool LogFrameComparison(TestResult test, TestResult reference)
+        {
+            var testFrame = test.Frame;
+            var refFrame = reference.Frame;
 
             if (!testFrame.DimensionsMatch(refFrame))
             {

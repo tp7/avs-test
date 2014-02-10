@@ -7,13 +7,13 @@ namespace AvsTest
 {
     internal class Options
     {
-        [Option('r', "ref-dll", DefaultValue = "AviSynth.dll", HelpText="Path to reference AviSynth.dll")]
+        [Option('r', "ref-dll", DefaultValue = "AviSynth.dll", HelpText = "Path to reference AviSynth.dll")]
         public string StableAvs { get; set; }
 
-        [Option('t', "test-dll", Required = true, HelpText="Path to AviSynth.dll under test")]
+        [Option('t', "test-dll", Required = true, HelpText = "Path to AviSynth.dll under test")]
         public string TestAvs { get; set; }
 
-        [Option('s', "scripts", Required = true, HelpText="Path to folder with test scripts")]
+        [Option('s', "scripts", Required = true, HelpText = "Path to folder with test scripts")]
         public string TestScripsFolder { get; set; }
 
         //syntax is --include herp:derp:hurr:durr
@@ -22,6 +22,10 @@ namespace AvsTest
 
         [OptionList("exclude", HelpText = "Exclude specific tests", MutuallyExclusiveSet = "includes")]
         public IList<string> Exclude { get; set; }
+
+        [Option("max-fps-drop", HelpText = "Maximum fps drop for test to be considered correct, in percent",
+            DefaultValue = 10)]
+        public float MaxFpsDrop { get; set; }
 
         [ParserState]
         public IParserState LastParsingState { get; set; }
@@ -39,6 +43,8 @@ namespace AvsTest
             help.AddPreOptionsLine(
                 @"Usage: AvsTest --stable-dll C:\stable\avisynth.dll --ref-dll C:\unstable\avisynth.dll --scripts C:\scripts");
 
+            help.AddOptions(this);
+
             if (LastParsingState.Errors.Count > 0)
             {
                 var errors = help.RenderParsingErrorsText(this, 2); // indent with two spaces
@@ -48,11 +54,6 @@ namespace AvsTest
                     help.AddPreOptionsLine(errors);
                 }
             }
-            else
-            {
-                help.AddOptions(this);
-            }
-
             return help;
         }
     }

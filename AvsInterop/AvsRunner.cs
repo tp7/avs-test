@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -33,11 +34,7 @@ namespace AvsInterop
 
                         using (var stream = mmf.CreateViewStream())
                         {
-                            fmt.Serialize(stream, new TestResult
-                            {
-                                Frame = result,
-                                Kind = TestResultKind.Frame
-                            });
+                            fmt.Serialize(stream, result);
                         }
                     }
                     catch(Exception e)
@@ -59,33 +56,85 @@ namespace AvsInterop
             }
         }
 
-        private static VideoFrame RunTestCase(string avsDllPath, TestCase test)
+        private static TestResult RunTestCase(string avsDllPath, TestCase test)
         {
             using (var env = new AvsScriptEnvironment(avsDllPath))
             {
-                using (var result = env.Invoke("eval", new AvsValue(test.ScriptText), true))
+                using (var evalResult = env.Invoke("eval", new AvsValue(test.ScriptText), true))
                 {
-                    if (result.IsError)
+                    if (evalResult.IsError)
                     {
                         throw new AvsOperationException(string.Format("AviSynth returned error: {0}",
-                            result.ErrorMessage));
+                            evalResult.ErrorMessage));
                     }
-                    using (var clip = result.AsClip())
+                    using (var clip = evalResult.AsClip())
                     {
-                        if (test.AccessType == AccessType.Sequential)
+                        if (test.Kind == TestKind.Performance)
                         {
-                            //prefetch all frames before required
-                            for (int i = 0; i < test.Frame; i++)
+                            return new TestResult
                             {
-                                clip.GetFrame(i).Dispose();
-                            }
+                                Performance = GetPerformanceData(test, clip),
+                                Kind = TestResultKind.Fps
+                            };
                         }
-                        using (var frame = clip.GetFrame(test.Frame))
+                        return new TestResult
                         {
-                            return new ManagedVideoFrame(frame);
-                        }
+                            Frame = GetOutputFrame(test, clip),
+                            Kind = TestResultKind.Frame
+                        };
                     }
                 }
+            }
+        }
+
+        private static PerformanceData GetPerformanceData(TestCase test, AvsClip clip)
+        {
+            for (int i = 0; i < test.SkipFirst; i++)
+            {
+                clip.GetFrame(i).Dispose();
+            }
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            for (int i = 0; i < test.FrameCount; i++)
+            {
+                clip.GetFrame(i).Dispose();
+                //todo: it's a VERY BAD IDEA to directly write to console from here
+                if (i%100 == 0)
+                {
+                    RemoveCurrentConsoleLine();
+                    Console.Write("Frame: {0}", i);
+                }
+            }
+            RemoveCurrentConsoleLine();
+            sw.Stop();
+            return new PerformanceData
+            {
+                ElapsedMilliseconds = sw.ElapsedMilliseconds,
+                Fps = test.FrameCount/sw.Elapsed.TotalSeconds
+            };
+        }
+
+        private static void RemoveCurrentConsoleLine()
+        {
+            int currentLineCursor = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write(new String(' ', Console.BufferWidth));
+            Console.SetCursorPosition(0, currentLineCursor);
+        }
+
+        private static VideoFrame GetOutputFrame(TestCase test, AvsClip clip)
+        {
+            if (test.AccessType == AccessType.Sequential)
+            {
+                //prefetch all frames before required
+                for (int i = 0; i < test.Frame; i++)
+                {
+                    clip.GetFrame(i).Dispose();
+                }
+            }
+            using (var frame = clip.GetFrame(test.Frame))
+            {
+                return new ManagedVideoFrame(frame);
             }
         }
     }

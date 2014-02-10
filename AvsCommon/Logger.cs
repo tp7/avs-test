@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AvsCommon.Enums;
+using AvsCommon.Ipc;
 
 namespace AvsCommon
 {
@@ -59,5 +60,21 @@ namespace AvsCommon
             Console.WriteLine("Success: {0}", success);
             Console.WriteLine("Failed: {0}", failed);
         }
+
+        public static void LogFpsTestResult(bool success, TestResult test, TestResult reference)
+        {
+            if (success)
+            {
+                Console.WriteLine("\tPassed");
+            }
+            else
+            {
+                Console.WriteLine("\tFailed");
+            }
+            var percent = (reference.Performance.Fps - test.Performance.Fps)/reference.Performance.Fps*100;
+            Console.WriteLine("\tref: {0:0.00} fps, test: {1:0.00} fps, {2:0.00}% {3}", reference.Performance.Fps,
+                test.Performance.Fps,
+                Math.Abs(percent), percent > 0 ? "drop" : "improvement");
+        }
     }
-}
+} 

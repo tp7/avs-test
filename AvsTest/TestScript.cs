@@ -13,6 +13,9 @@ namespace AvsTest
     {
         public string Name { get; set; }
         public string ImageName { get; set; }
+        public TestKind Kind { get; set; }
+        public int SkipFrames { get; set; }
+        public int FrameCount { get; set; }
         public List<TestParameter> Variables { get; set; }
     }
 
@@ -119,6 +122,27 @@ namespace AvsTest
                        case "variables":
                            td.Variables = ParseVariablesString(paramValue);
                            break;
+                       case "kind":
+                           td.Kind = paramValue == "fps" || paramValue == "perf" || paramValue == "performance"
+                               ? TestKind.Performance
+                               : TestKind.Correctness;
+                           break;
+                       case "frames":
+                           int frames;
+                           if (!int.TryParse(paramValue, out frames))
+                           {
+                               throw new ParsingException(string.Format("Invalid frames value, should be integer: {0}", paramValue));
+                           }
+                           td.FrameCount = frames;
+                           break;
+                       case "skip":
+                           int skip;
+                           if (!int.TryParse(paramValue, out skip))
+                           {
+                               throw new ParsingException(string.Format("Invalid skip value, should be integer: {0}", paramValue));
+                           }
+                           td.SkipFrames = skip;
+                           break;
                        default:
                            throw new ParsingException(string.Format("Unknown parameter: {0}", paramName));
                    }
@@ -163,7 +187,8 @@ namespace AvsTest
                         Frame = _frame,
                         Parameters = new List<TestParameter>(),
                         ScriptText = _text,
-                        TestName = Name
+                        TestName = Name,
+                        Kind = TestKind.Correctness
                     }
                 };
             }
@@ -174,7 +199,10 @@ namespace AvsTest
                 ScriptText = PrepareScriptText(_text, testCase.Variables),
                 TestName = testCase.Name ?? Name,
                 ImageName = testCase.ImageName,
-                Parameters = testCase.Variables.AsReadOnly()
+                Parameters = testCase.Variables.AsReadOnly(),
+                FrameCount = testCase.FrameCount,
+                SkipFirst = testCase.SkipFrames,
+                Kind = testCase.Kind
             });
         }
 
