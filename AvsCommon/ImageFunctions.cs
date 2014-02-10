@@ -29,6 +29,8 @@ namespace AvsCommon
             return _results[(int?)plane ?? 0];
         }
 
+        public int NumberOfPlanes { get { return _results.Count(f => f != null); } }
+
         public bool AllZero { get { return _results.All(f => f == null || (f.MaxDeviation == 0 && f.Sad == 0)); } }
     }
 

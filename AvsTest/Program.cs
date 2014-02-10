@@ -43,6 +43,10 @@ namespace AvsTest
                     ));
             }
 
+            int total = 0;
+            int failed = 0;
+            int success = 0;
+
             foreach (var script in scripts)
             {
                 foreach (var testCase in script.GetTestCases())
@@ -62,26 +66,36 @@ namespace AvsTest
                     var testResult = new TestRunner(options.TestAvs).RunTestCase(testCase);
                     var idealResult = new TestRunner(options.StableAvs).RunTestCase(testCase);
 
-                    LogTestResult(testResult, idealResult, logger);
+                    var result = LogTestResult(testResult, idealResult, logger);
+                    if (result)
+                    {
+                        success++;
+                    }
+                    else
+                    {
+                        failed++;
+                    }
+                    total++;
 
                     logger.WriteEmptyLine();
                 }
             }
+            logger.LogEpilogue(total, failed, success);
         }
 
-        private static void LogTestResult(TestResult testResult, TestResult idealResult, Logger logger)
+        private static bool LogTestResult(TestResult testResult, TestResult idealResult, Logger logger)
         {
             if (testResult.Kind == TestResultKind.Exception)
             {
                 logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
                     testResult.Exception.GetType().FullName, testResult.Exception.Message));
-                return;
+                return false;
             }
             if (idealResult.Kind == TestResultKind.Exception)
             {
                 logger.LogTestFailure(string.Format("Failed. Exception of type {0}: {1}",
                     idealResult.Exception.GetType().FullName, idealResult.Exception.Message));
-                return;
+                return false;
             }
 
             var testFrame = testResult.Frame;
@@ -90,22 +104,22 @@ namespace AvsTest
             if (!testFrame.DimensionsMatch(refFrame))
             {
                 logger.LogTestFailure("Failed. Frame dimensions don't match");
-                return;
+                return false;
             }
             if (!testFrame.ColorspaceMatches(refFrame))
             {
                 logger.LogTestFailure("Failed: colorspace doesn't match");
-                return;
+                return false;
             }
             var diff = ImageFunctions.CompareImages(refFrame, testFrame);
             if (diff.AllZero)
             {
                 logger.LogSuccess("Success");
+                return true;
             }
-            else
-            {
-                logger.LogTestFailure("Failed: frames aren't identical");
-            }
+            logger.LogTestFailure("Failed: frames aren't identical");
+            logger.LogComparisonResult(diff);
+            return false;
         }
 
         private static IEnumerable<TestScript> LoadScipts(string scriptsFolder, Logger logger)
