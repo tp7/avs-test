@@ -75,6 +75,9 @@ namespace AvsCommon
             Console.WriteLine("\tref: {0:0.00} fps, test: {1:0.00} fps, {2:0.00}% {3}", reference.Performance.Fps,
                 test.Performance.Fps,
                 Math.Abs(percent), percent > 0 ? "drop" : "improvement");
+            Console.WriteLine("\tref: {0:0.00}MBs, test: {1:0.00}MBs",
+                reference.Performance.PeakMemoryUsageInBytes/1024f/1024f,
+                test.Performance.PeakMemoryUsageInBytes/1024f/1024f);
         }
     }
 } 

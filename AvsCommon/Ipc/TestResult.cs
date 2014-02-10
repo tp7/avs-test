@@ -14,6 +14,7 @@ namespace AvsCommon.Ipc
     {
         public double Fps { get; set; }
         public long ElapsedMilliseconds { get; set; }
+        public long PeakMemoryUsageInBytes { get; set; }
     }
 
     [Serializable]

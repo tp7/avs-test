@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using AvsCommon;
 using AvsCommon.Exceptions;
 using AvsCommon.Ipc;
@@ -14,6 +16,9 @@ namespace AvsTest
     {
         static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
             var options = new Options();
             if (Parser.Default.ParseArguments(args, options))
             {
