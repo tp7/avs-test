@@ -74,8 +74,6 @@ namespace AvsTest
                         failed++;
                     }
                     total++;
-
-                    Logger.WriteEmptyLine();
                 }
             }
             Logger.LogEpilogue(total, failed, success);
@@ -110,14 +108,8 @@ namespace AvsTest
                 return false;
             }
             var diff = ImageFunctions.CompareImages(refFrame, testFrame);
-            if (diff.AllZero)
-            {
-                Logger.LogSuccess("Success");
-                return true;
-            }
-            Logger.LogTestFailure("Failed: frames aren't identical");
-            Logger.LogComparisonResult(diff);
-            return false;
+            Logger.LogComparisonTestResult(diff);
+            return diff.AllZero;
         }
 
         private static IEnumerable<TestScript> LoadScipts(string scriptsFolder)

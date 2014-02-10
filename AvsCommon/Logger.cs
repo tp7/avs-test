@@ -4,7 +4,6 @@ using AvsCommon.Enums;
 
 namespace AvsCommon
 {
-    //one day I'll put something in here
     public static class Logger
     {
         public static void LogWarning(string message)
@@ -17,11 +16,6 @@ namespace AvsCommon
             Console.WriteLine(message);
         }
 
-        public static void LogSuccess(string message)
-        {
-            Console.WriteLine("\t" + message);
-        }
-
         public static void LogTestStart(string message)
         {
             Console.WriteLine(message);
@@ -29,15 +23,17 @@ namespace AvsCommon
 
         public static void LogTestFailure(string message)
         {
-            Console.WriteLine("\t" + message);
+            Console.WriteLine("\t{0}{1}", message, Environment.NewLine);
         }
 
-        public static void LogComparisonResult(ImageComparisonResult result)
+        public static void LogComparisonTestResult(ImageComparisonResult result)
         {
             if (result.AllZero)
             {
-                Console.WriteLine("\tNo difference");
+                Console.WriteLine("\tPassed{0}", Environment.NewLine);
+                return;
             }
+            Console.WriteLine("\tFailed: frames aren't identical");
             if (result.NumberOfPlanes == 1)
             {
                 var pl = result.GetResult();
@@ -51,11 +47,10 @@ namespace AvsCommon
                     Console.WriteLine("\tmax difference {0}: {1}, SAD: {2}", plane, pl.MaxDeviation, pl.Sad);
                 }
             }
-        }
-
-        public static void WriteEmptyLine()
-        {
-            Console.WriteLine();
+            else
+            {
+                throw new NotImplementedException("Weird number of planes");
+            }
         }
 
         public static void LogEpilogue(int total, int failed, int success)
